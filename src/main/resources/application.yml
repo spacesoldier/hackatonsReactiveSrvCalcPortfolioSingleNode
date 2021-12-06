@@ -1,0 +1,127 @@
+server:
+  port: ${application_port:8080}
+  shutdown: graceful
+
+
+management:
+  endpoint:
+    health:
+      probes:
+        enabled: true
+  health:
+    livenessstate:
+      enabled: true
+    readinessstate:
+      enabled: true
+
+user_catalog:
+  base_url: http://user-catalog:9002/login-info/
+
+used-topics:
+  # this is the input topic for the process manager module
+  # incoming request should be written here
+  security-limits-topic: &LIMITS security-limits
+
+  # this is the topic for logging messages
+  logger-all-topic: &LOGGER_TOPIC spacecoldat-app-events-log
+  # error messages should be written here, for further processing
+  error-all-topic: &ERROR_TOPIC spacecoldat-app-errors-log
+
+
+spring:
+  redis:
+    host: ${redis_host:redis-master}
+    port: ${redis_port:6379}
+    user: ${redis_user:default}
+    password: ${redis_password:}
+  lifecycle:
+    timeout-per-shutdown-phase: 1m
+  kafka:
+    bootstrap-servers: ${kafka_host:kafka}:${kafka_port:9092}
+  cloud:
+    stream:
+      function:
+        # here we define the names of the data processing functions
+        definition: securityLimitsSubscribe;logMessageAsyncOutput;errorMessageAsyncOutput;
+      bindings:
+
+        ########### security limits #######################################
+        securityLimitsSubscribe-in-0:                                     #
+          # treat the routes changelog as a global table                  #
+          # and put it into state source                                  #
+          destination: *LIMITS                                            #
+          startOffset: latest                                             #
+                                                                          #
+        securityLimitsSubscribe-out-0:                                    #
+          # producing error messages                                      #
+          destination: *ERROR_TOPIC                                       #
+                                                                          #
+        securityLimitsSubscribe-out-1:                                    #
+          # producing logs                                                #
+          destination: *LOGGER_TOPIC                                      #
+        ###################################################################
+
+
+        ########### async outputs #########################################
+        logMessageAsyncOutput-out-0:                                      #
+          # log all events during the request processing                  #
+          destination: *LOGGER_TOPIC                                      #
+                                                                          #
+        errorMessageAsyncOutput-out-0:                                    #
+          # log all errors                                                #
+          destination: *ERROR_TOPIC                                       #
+                                                                          #
+        ###################################################################
+
+      kafka:
+        streams:
+          bindings:
+            ########### limits updates ####################################################
+            securityLimitsSubscribe-in-0:                                                 #
+              consumer:                                                                   #
+                applicationId: security-limits-${APP_RUN_UID}                             #
+                                                                                          #
+                keySerde: org.apache.kafka.common.serialization.Serdes$StringSerde        #
+                valueSerde: org.apache.kafka.common.serialization.Serdes$StringSerde      #
+                                                                                          #
+            securityLimitsSubscribe-out-0:                                                #
+              producer:                                                                   #
+                keySerde: org.apache.kafka.common.serialization.Serdes$StringSerde        #
+                valueSerde: com.spacesoldat.hackathons.serdes.gson.GsonSerde              #
+            securityLimitsSubscribe-out-1:                                                #
+              producer:                                                                   #
+                keySerde: org.apache.kafka.common.serialization.Serdes$StringSerde        #
+                valueSerde: com.spacesoldat.hackathons.serdes.gson.GsonSerde                     #
+            ###############################################################################
+
+
+            ########### async outputs #####################################################
+            errorMessageAsyncOutput-out-0:                                                #
+              # log all errors                                                            #
+              producer:                                                                   #
+                keySerde: org.apache.kafka.common.serialization.Serdes$StringSerde        #
+                valueSerde: org.apache.kafka.common.serialization.Serdes$StringSerde      #
+                                                                                          #
+            logMessageAsyncOutput-out-0:                                                  #
+              # log all events during the request processing                              #
+              producer:                                                                   #
+                keySerde: org.apache.kafka.common.serialization.Serdes$StringSerde        #
+                valueSerde: org.apache.kafka.common.serialization.Serdes$StringSerde      #
+                                                                                          #
+            ###############################################################################
+
+
+          binder:
+            application-id: spacesoldats-awesoome-service
+            configuration:
+              num.stream.threads: ${KSTREAM_THREADS:1}
+
+              default:
+                key:
+                  serde: org.apache.kafka.common.serialization.Serdes$StringSerde
+                value:
+                  serde: org.apache.kafka.common.serialization.Serdes$StringSerde
+            auto-create-topics: true
+
+            consumer-properties:
+              auto-offset-reset: latest
