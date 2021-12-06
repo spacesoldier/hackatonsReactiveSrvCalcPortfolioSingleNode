@@ -4,7 +4,7 @@ Yes, I could probably find a better name for the project, but who cares
 
 ## Intro
 This project was written during the hackaton at the beginning of December 2021. The case was formulated as following:
-* This service must provide a list of user's balance by every position of his shares
+* This service must provide a list of user's balance by every position of his shares in portfolio
 * The information about updates of user's balance is provided in unsorted manner in form of "balance snapshots" and "balance increments" in one topic in Kafka by several unknown systems
 * The topic in Kafka have 6 partitions, the key of the message is client's id
 * The actual price of the shares is published in Redis by unknown system in form of ticker
@@ -12,7 +12,7 @@ This project was written during the hackaton at the beginning of December 2021. 
 * The service must calculate the total cost by every position from user's portfolio using the latest value from tickers
 * The user will provide his login and the service must call another service (user catalog) by Http to obtain client's id to match the message stream in Kafka topic with corresponding user's login
 * The service will be deployed in Kubernetes cluster in scale of up to 3 pods
-* You have a chance to reconfigure the internal logic in same code base using the information about scale. For obvuious reasons this "feature" was skipped. It's not a good practice to implement microservice system based on monolythic code base. But just for historic consistency let's say that information about scale is provided to the service instance through the environment variables and could be:
+* You have a chance to reconfigure the internal logic in same code base using the information about scale. For obvuious reasons this "feature" was skipped. It's not a good practice to implement microservice system based on monolythic code base. But just for historic consistency let's say that the information about scale is provided to the service instance through the environment variables and could be:
 ** this instance is running being "single" in scale of 1
 ** this instance is running being "scaled" in scale of 2
 ** as a result you may have two different services using same code base, only one of them will be able to receive http requests
