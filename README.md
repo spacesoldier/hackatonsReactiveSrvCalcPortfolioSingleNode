@@ -79,7 +79,7 @@ The handlers defined above are implemented as a separate elements which have a r
 **success handler** acts the following way:
 * saves the received user data into the internal cache of the servide 
 * drop the aggregate object (which is the original request received by the service) into the "serve" stream
-** fail handler ** does the following:
+**fail handler** does the following:
 * generates an error message which contains the information about error and the aggregate objeect
 * drops the error message into the "serve" stream
 
