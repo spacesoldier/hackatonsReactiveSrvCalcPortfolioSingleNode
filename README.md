@@ -13,9 +13,9 @@ This project was written during the hackaton at the beginning of December 2021. 
 * The user will provide his login and the service must call another service (user catalog) by Http to obtain client's id to match the message stream in Kafka topic with corresponding user's login
 * The service will be deployed in Kubernetes cluster in scale of up to 3 pods
 * You have a chance to reconfigure the internal logic in same code base using the information about scale. For obvuious reasons this "feature" was skipped. It's not a good practice to implement microservice system based on monolythic code base. But just for historic consistency let's say that the information about scale is provided to the service instance through the environment variables and could be:
-** this instance is running being "single" in scale of 1
-** this instance is running being "scaled" in scale of 2
-** as a result you may have two different services using same code base, only one of them will be able to receive http requests
+ * this instance is running being "single" in scale of 1
+ * this instance is running being "scaled" in scale of 2
+ * as a result you may have two different services using same code base, only one of them will be able to receive http requests
  
 
 # service structure
